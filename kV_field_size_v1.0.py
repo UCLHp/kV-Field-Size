@@ -29,8 +29,10 @@ sg.theme('DarkAmber')
 # GUI layout
 layout = [[sg.Text('Select the data folder + operator(s)')],
           [sg.Text('Data folder:', size=(14, 1)), sg.In(key="datadir"), sg.FolderBrowse()],
-          [sg.Text('Operator 1', size=(14, 1)), sg.In(key="op1", size=(5, 1)),
-           sg.Text('      Operator 2', size=(14, 1)), sg.In(key="op2", size=(5, 1))],
+          [sg.Text('')],
+          [sg.Text('Operator 1:', size=(14, 1)), sg.In(key="op1", size=(5, 1)),
+           sg.Text('      Operator 2:', size=(14, 1)), sg.In(key="op2", size=(5, 1))],
+          [sg.Text('Comments:', size=(14, 1)), sg.In(key="comment")],
           [sg.Text('')],
           [sg.Button('Ok'), sg.Button('Cancel')]]
 
@@ -48,9 +50,12 @@ while True:
     data_path = path.replace('/', '\\\\')
 
     # Operators
-    op1 = list(values.items())[-2][1]
-    op2 = list(values.items())[-1][1]
+    op1 = list(values.items())[-3][1]
+    op2 = list(values.items())[-2][1]
     operator = [op1, op2]
+
+    # Comments
+    comment = list(values.items())[-1][1]
 
     if event == 'Ok':
         break
@@ -391,12 +396,19 @@ for i in np.arange(len(a_pk)):
 table = data_path + "\\{}_{}_Result Table.csv".format(name[0][7:9], name[0][0:6]) # table file name
 
 # Result table layout
-data = {"Side": ["A", "B", "G", "T"],
-        "Threshold ({})".format(name[0][-1]): [A_mmField[0], B_mmField[0], G_mmField[0], T_mmField[0]],
-        "Threshold ({})".format(name[1][-1]): [A_mmField[1], B_mmField[1], G_mmField[1], T_mmField[1]],
-        "Gradient ({})".format(name[0][-1]): [a_mmpk[0], b_mmpk[0], g_mmpk[0], t_mmpk[0]],
-        "Gradient ({})".format(name[1][-1]): [a_mmpk[1], b_mmpk[1], g_mmpk[1], t_mmpk[1]]
-        }
+if np.size(A_mmField) == 1:
+    data = {"Side": ["A", "B", "G", "T"],
+            "Threshold ({})".format(name[0][-1]): [A_mmField[0], B_mmField[0], G_mmField[0], T_mmField[0]],
+            "Gradient ({})".format(name[0][-1]): [a_mmpk[0], b_mmpk[0], g_mmpk[0], t_mmpk[0]],
+            }
+
+else:
+    data = {"Side": ["A", "B", "G", "T"],
+            "Threshold ({})".format(name[0][-1]): [A_mmField[0], B_mmField[0], G_mmField[0], T_mmField[0]],
+            "Threshold ({})".format(name[1][-1]): [A_mmField[1], B_mmField[1], G_mmField[1], T_mmField[1]],
+            "Gradient ({})".format(name[0][-1]): [a_mmpk[0], b_mmpk[0], g_mmpk[0], t_mmpk[0]],
+            "Gradient ({})".format(name[1][-1]): [a_mmpk[1], b_mmpk[1], g_mmpk[1], t_mmpk[1]]
+            }
 
 # Save table as CSV
 df = pd.DataFrame(data)
@@ -518,6 +530,8 @@ pdf.ln(7)
 pdf.cell(30, 10, 'Location: Gantry {}'.format(name[0][8:9]), 'C') # gantry
 pdf.ln(7)
 pdf.cell(30, 10, 'Operator(s):  {} {}'.format(operator[0], operator[1]), 'C') # operator
+pdf.ln(7)
+pdf.cell(30, 10, 'Comments:  {}'.format(comment), 'C') # operator
 pdf.ln(12)
 
 ## Tables ##
@@ -526,8 +540,12 @@ pdf.cell(30, 10, 'Results', 'C') # title
 pdf.ln(10)
 
 # Header
-heading = ['Side', 'Threshold (A) / mm', 'Threshold (B) / mm', 'Gradient (A) / mm', 'Gradient (B) / mm']
-pdf.set_font('Arial', '', 10)
+if np.size(A_mmField) == 1:
+    heading = ['Side', 'Threshold ({}) / mm'.format(name[0][-1]), 'Gradient ({}) / mm'.format(name[0][-1])]
+    pdf.set_font('Arial', '', 10)
+else:
+    heading = ['Side', 'Threshold (A) / mm', 'Threshold (B) / mm', 'Gradient (A) / mm', 'Gradient (B) / mm']
+    pdf.set_font('Arial', '', 10)
 
 for i in heading:
     if i == "Side":
