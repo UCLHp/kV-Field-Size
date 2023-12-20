@@ -23,6 +23,8 @@ from fpdf import FPDF
 # File Path #
 #############
 
+print("Launching GUI...")
+
 ## Gui input ##
 sg.theme('DarkAmber')
 
@@ -48,6 +50,7 @@ while True:
     # Data folder path
     path = list(values.items())[0][1]
     data_path = path.replace('/', '\\\\')
+    measurement = data_path + "\\\\*.bmp"
 
     # Operators
     op1 = list(values.items())[-3][1]
@@ -58,13 +61,29 @@ while True:
     comment = list(values.items())[-1][1]
 
     if event == 'Ok':
+        test = [] # dummy array to test filename
+        checker = 0 # dummy value for error popup window
+
+        for fname in glob.glob(measurement): # filling dummy array with current filename within folder
+            test.append(os.path.basename(fname)[:-4])
+
+        for i in test: # check if filename matches XXXXXX_XX_X
+            if i[6] == "_" and i[9] == "_":
+                continue
+            else:
+                checker = 1
+
+        if checker == 0: # error popup window trigger
+            break
+        else:
+            sg.popup("Check filename matches the following convention: YYMMDD_GX_X. Press OK after correction!")
+
         break
 
 window.close()
 
-## File path ##
-measurement = data_path + "\\*.bmp"
-graph = data_path + "\\kV Field Size({}).png"
+## Save path ##
+graph = data_path + "\\\\kV Field Size({}).png"
 
 ########################################################################################################################
 
@@ -241,13 +260,11 @@ def gradient_images(blur_img, kernel_size):
 ########
 # Data #
 ########
-path = measurement
-
 img = [] # raw image array
 name = [] # labels for the image
 
 # find all files and load them into img using a for loop
-for fname in glob.glob(path):
+for fname in glob.glob(measurement):
     # labeling files
     name.append(os.path.basename(fname)[:-4])
     # reading files
@@ -393,7 +410,7 @@ for i in np.arange(len(a_pk)):
 # Result (CSV) #
 ################
 
-table = data_path + "\\{}_{}_Result Table.csv".format(name[0][7:9], name[0][0:6]) # table file name
+table = data_path + "\\\\{}_{}_Result Table.csv".format(name[0][7:9], name[0][0:6]) # table file name
 
 # Result table layout
 if np.size(A_mmField) == 1:
@@ -413,6 +430,8 @@ else:
 # Save table as CSV
 df = pd.DataFrame(data)
 df.to_csv(table, index=False, header=True)
+
+print("Results CSV Generated!")
 
 ################
 # Result Graph #
@@ -503,13 +522,15 @@ while i < np.size(A_pxField):
 
     i = i + 1
 
+print("Results Images Generated!")
+
 ########################################################################################################################
 
 ##########
 # Report #
 ##########
 
-report = data_path + "\\{}_{}_Report.pdf".format(name[0][7:9], name[0][0:6]) # report file name
+report = data_path + "\\\\{}_{}_Report.pdf".format(name[0][7:9], name[0][0:6]) # report file name
 
 pdf = FPDF()
 pdf.add_page()
@@ -571,3 +592,7 @@ for i in np.arange(len(name)):
     pdf.image(graph.format((name[i][10:11])), x=-10, h=85)
 
 pdf.output(report, 'F')
+
+print("Report Generated!")
+
+input("Press Enter To Continue...")
